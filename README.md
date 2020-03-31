@@ -13,10 +13,13 @@ brew install imagemagick
 Put the "icon-splash-generator" folder in root of your ionic project.
 
 you needs two images inside resources folder: 
+
 icon.png --> 1024 × 1024px with no alpha
+
 splash.pn --> 2732 × 2732px with no alpha
 
 go to "icon-splash-generator" and run:
+
 run.py
 
 will be generate all icons and splahs inside resouces folder.
