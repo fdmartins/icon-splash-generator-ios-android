@@ -3,13 +3,13 @@
 A very simple python program to generate icon and splash for android and ios platforms.
 Designed to cordova/ionic projects.
 
-#- Dependences:
+# Dependences:
 ImageMagick
 
 run this in your terminal to install:
 brew install imagemagick
 
-#- How to use:
+# How to use:
 Put the "icon-splash-generator" folder in root of your ionic project.
 
 you needs two images inside resources folder: 
