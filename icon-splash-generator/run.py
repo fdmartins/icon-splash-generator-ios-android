@@ -56,12 +56,23 @@ def readConfigXml(path="../config.xml"):
                         splash['@width'] = size[0]
                         splash['@height'] = size[1]
                         #print(splash)
-                    if 'land-' in splash["@density"]:
+                    elif 'land-' in splash["@density"]:
                         #print(splash)
                         size = android_splash_density_dict[splash["@density"].replace('land-','')]
                         #print(size)
                         splash['@width'] = size[1]
                         splash['@height'] = size[0]
+                        #print(splash)
+                    else:
+                        # formato sem land nem port. precisamos idenitificar se eh land ou port pelo name.
+                        #print(splash)
+                        size = android_splash_density_dict[splash["@density"]]
+                        if 'port-' in splash["@src"]:
+                            splash['@width'] = size[0]
+                            splash['@height'] = size[1]
+                        if 'land-' in splash["@src"]:
+                            splash['@width'] = size[1]
+                            splash['@height'] = size[0]
                         #print(splash)
                 
                 splashs[platform_name].append(splash)
@@ -98,8 +109,10 @@ def _resize_imagemagick(source, destination, width, height, quality=90, backgrou
 
     #raw_command = 'convert -background {background} "{source}" -resize {bigger}x{bigger} -gravity center -extent {width}x{height} "{destination}"'
     
-    raw_command = 'convert "{source}" -resize {width}x{height}^ -gravity center -extent  {width}x{height} -quality {quality} "{destination}"'
+    raw_command = 'convert  -background none "{source}" -resize {width}x{height}^ -gravity center -extent  {width}x{height} -quality {quality} "{destination}"'
     
+    
+
     command = raw_command.format(
         source=source,
         destination=destination,
@@ -110,32 +123,46 @@ def _resize_imagemagick(source, destination, width, height, quality=90, backgrou
         quality=quality
     )
 
+    #print(command)
+
     logging.debug(command)
     subprocess.call(command, shell=True)
+
+    subprocess.call("./pngquant --quality=0-"+str(quality)+" -f --ext .png  '"+destination+"'",shell=True)
 
 def formatFileName(path):
     paths = path.split('/')
     return paths[len(paths)-1]
 
-def generateFiles(platform, icons, splashs, path="../resources/", quality=90):
-    icon_file = path+"icon.png"
+def generateFiles(platform, icons, splashs, path="../resources/", quality=90, adaptativeIcon=False):
+
     splash_file = path+"splash.png"
-    
+
     dest_path = path#"./test/"
 
     if not os.path.exists(dest_path+platform):
         os.mkdir(dest_path+platform)
+
 
     for icon in icons[platform]:
         if not os.path.exists(dest_path+platform+"/icon"):
             os.mkdir(dest_path+platform+"/icon")
             print("Directory " , dest_path+platform ,  " Created ")
 
-        dest_file = dest_path+platform+"/icon/" + formatFileName(icon["@src"])
-        
-        print("ICON - Gerando...", dest_file)
+    
+        if adaptativeIcon:
+            dest_file_foreground = dest_path+platform+"/icon/" + formatFileName(icon["@foreground"])
+            dest_file_background = dest_path+platform+"/icon/" + formatFileName(icon["@background"])
 
-        resize(icon_file, dest_file, icon['@width'], icon['@height'], quality=quality)
+            print("ICON - Gerando...", dest_file_foreground)
+            print("ICON - Gerando...", dest_file_background)
+            resize(path+"icon_foreground.png", dest_file_foreground, icon['@width'], icon['@height'], quality=quality)
+            resize(path+"icon_background.png", dest_file_background, icon['@width'], icon['@height'], quality=quality)
+        else:
+            dest_file = dest_path+platform+"/icon/" + formatFileName(icon["@src"])
+            
+            print("ICON - Gerando...", dest_file)
+            resize(path+"icon_foreground.png", dest_file, icon['@width'], icon['@height'], quality=quality)
         #exit()
 
     for splash in splashs[platform]:
@@ -161,7 +188,8 @@ icons,splashs = readConfigXml(path="../config.xml")
 #    print(icon)
 
 print("=== ANDROID ===")
-generateFiles('android', icons, splashs, path="../resources/",quality=90)
+#colocar em path icon_foreground.png e icon_background.png para adaptativeIcons...para nao adaptativos, usar apenas icon.png
+generateFiles('android', icons, splashs, path="../resources/",quality=40, adaptativeIcon=True)
 
 print("=== IOS ===")
-generateFiles('ios', icons, splashs, path="../resources/",quality=90)
+generateFiles('ios', icons, splashs, path="../resources/",quality=40)
